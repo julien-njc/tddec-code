@@ -1,3 +1,7 @@
+ifndef CPPUTEST_HOME
+$(error CPPUTEST_HOME is not set. Build with Docker (see README.md) or point it at a CppUTest v4.0 checkout)
+endif
+export CPPUTEST_HOME
 
 all: cpputest
 	@echo CPPUTEST_HOME is $(CPPUTEST_HOME)
@@ -8,7 +12,6 @@ all: cpputest
 	make -i -C code-t3
 
 clean:
-	make -i -C cpputest clean
 	make -i -C code clean
 	make -i -C code-t0 clean
 	make -i -C code-t1 clean
@@ -16,7 +19,7 @@ clean:
 	make -i -C code-t3 clean
 
 .PHONY: cpputest
-cpputest: cpputest/lib/libCppUTest.a
+cpputest: $(CPPUTEST_HOME)/lib/libCppUTest.a
 
-cpputest/lib/libCppUTest.a:
-	cd cpputest; autoreconf . -i && ./configure && make tdd
+$(CPPUTEST_HOME)/lib/libCppUTest.a:
+	cd $(CPPUTEST_HOME); autoreconf . -i && ./configure && make tdd

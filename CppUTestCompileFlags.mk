@@ -1,5 +1,5 @@
 
-# Figure out how to ask if gcc7 vs clang, gcc7 only right now
+# Figure out how to ask if gcc vs clang, gcc only right now
 ifeq "0" "1"
 CPPUTEST_WARNINGFLAGS += -Wno-unknown-warning-option
 CPPUTEST_WARNINGFLAGS += -Wno-covered-switch-default
@@ -22,3 +22,11 @@ CPPUTEST_CFLAGS += -Wall
 CPPUTEST_CFLAGS += -Wstrict-prototypes
 CPPUTEST_CFLAGS += -pedantic
 CPPUTEST_CFLAGS += -Wno-missing-prototypes
+
+# Compatibility mode: compile with the language standards the book code was
+# written for, so newer compilers don't change its meaning (e.g. C23's f() == f(void)).
+CPPUTEST_CFLAGS += -std=gnu99
+CPPUTEST_CXXFLAGS += -std=gnu++11
+
+# Warnings added to newer gcc versions that the book code was never written for.
+CPPUTEST_CFLAGS += -Wno-enum-int-mismatch

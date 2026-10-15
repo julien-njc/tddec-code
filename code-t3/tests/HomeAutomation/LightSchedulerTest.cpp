@@ -62,10 +62,11 @@ TEST_GROUP(LightScheduler)
 
     void checkLightState(int id, int level)
     {
-        if (id == LIGHT_ID_UNKNOWN)
-            LONGS_EQUAL(LIGHT_STATE_UNKNOWN, LightDriverSpy_GetLastState())
-        else
-            LONGS_EQUAL(level, LightDriverSpy_GetState(id))
+        if (id == LIGHT_ID_UNKNOWN) {
+            LONGS_EQUAL(LIGHT_STATE_UNKNOWN, LightDriverSpy_GetLastState());
+        } else {
+            LONGS_EQUAL(level, LightDriverSpy_GetState(id));
+        }
     }
 
     void setTimeTo(int day, int minute)

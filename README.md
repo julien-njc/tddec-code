@@ -32,105 +32,83 @@ If you do find differences or errors please let me know.
 
 [Docker Install Information](https://docs.docker.com/engine/installation/)
 
-#### Get a gcc version 7 docker image
-
-From the Mac or Linux command line (with docker running), do these commands.
-Depending on how your account is setup, you may need to run docker as `sudo`.
+#### Clone the tddec-code repo
 
 ```
-docker pull gcc:7
-docker run gcc:7 gcc -v
+git clone https://github.com/jwgrenning/tddec-code.git
+cd tddec-code
 ```
 
-You should see something like this for the gcc version report:
+CppUTest is built into the Docker image, so there's nothing else to download.
+
+#### Build and run all the tests
+
+The same commands work on Mac, Linux and Windows (cmd.exe or PowerShell), as long
+as Docker is running. Run them from the `tddec-code` directory.
 
 ```
-Using built-in specs.
-COLLECT_GCC=gcc
-COLLECT_LTO_WRAPPER=/usr/local/libexec/gcc/x86_64-linux-gnu/7.3.0/lto-wrapper
-Target: x86_64-linux-gnu
-Configured with: /usr/src/gcc/configure --build=x86_64-linux-gnu --disable-multilib --enable-languages=c,c++,fortran,go
-Thread model: posix
-gcc version 7.3.0 (GCC)
+docker compose run --rm tddec
 ```
 
-#### Clone tddec-code repo
-You'll need to clone this repo (not download a zip or tarball) because the repo
-includes the CppUTest `git submodule`.
+The first run builds the `tddec/cpputest` image (gcc 16 + CppUTest v4.0) from the
+`Dockerfile`, then builds the TDD-EC book code and runs its tests. Later runs
+reuse the image.
 
-From the Mac or Linux command line, get tddec-code and cpputest. Use a different 
-directory if you like.
-
-```
-MYPROJECTS=myprojects
-mkdir -p $MYPROJECTS
-cd $MYPROJECTS
-git clone --recurse-submodules https://github.com/jwgrenning/tddec-code.git
-```
-
-You should be able to see the tddec-code contents including the cpputest contents.
-
-#### Build CppUTest and the TDD-EC book code in the Docker container.
-
-From the Mac or Linux command line (with docker running), run these commands.  You will see
-CppUTest build and run its tests and then the TDD-EC book code will build and run
-its tests.
-
-```
-MOUNT_DIR=$PWD:/usr/src
-WORKING_DIR=/usr/src/tddec-code
-export CPPUTEST_HOME=$WORKING_DIR/cpputest
-docker run -it  -v $MOUNT_DIR -w $WORKING_DIR -e CPPUTEST_HOME gcc:7 make
-```
-
-Your current working directory (`$PWD`) is mounted as a volume 
-in the container using directory `/usr/src`.  That directory lives in the 
-docker container as well as in your native environment.
-
-Or from the Windows cmd.exe shell (with docker running), run these commands.  You will see
-CppUTest build and run its tests and then the TDD-EC book code will build and run
-its tests.  It assumes you have pulled the sources into folder C:\Users\YourName\tddec-code.
-
-```
-set PWD=/c/Users/YourName
-set MOUNT_DIR=%PWD%:/usr/src
-set WORKING_DIR=/usr/src/tddec-code
-set CPPUTEST_HOME=%WORKING_DIR%/cpputest
-docker run -it  -v %MOUNT_DIR% -w %WORKING_DIR% -e CPPUTEST_HOME gcc:7 make
-```
-
-Your current working directory (`%PWD%`) is mounted as a volume 
-in the container using directory `/usr/src`.  That directory lives in the 
-docker container as well as in your native environment.
-
-
+The `tddec-code` directory is mounted in the container at `/usr/src/tddec-code`,
+so edits you make on your machine are visible in the container right away.
 
 #### Build any sub-project from a command line
 
-From the Mac or Linux command line (with docker running)
+Open a bash shell in the container:
 
 ```
-docker run -it -v $MOUNT_DIR -w $WORKING_DIR -e CPPUTEST_HOME gcc:7 /bin/bash
+docker compose run --rm tddec bash
 ```
 
-Or from the Windows cmd.exe command line (with docker running)
-
-```
-docker run -it -v %MOUNT_DIR% -w %WORKING_DIR% -e CPPUTEST_HOME gcc:7 /bin/bash
-```
-
-From the docker container bash prompt, go to any subdirectory like this:
+From the container bash prompt, go to any subdirectory like this:
 
 ```
 cd code-t2
 make
 ```
+
+You can also do it in one command:
+
+```
+docker compose run --rm tddec make -C code-t2
+```
+
 You can now play to your hearts content and use this setup to bootstrap your own
-test environmentfigure that out.  You can make changes to the `code-t2` files, 
+test environment. You can make changes to the `code-t2` files,
 flip over to the Docker command line and run make.
 
-Instead of `gcc:7`, you can try other versions of gcc or clang if you like.
-For now you are on your own in those other environments.
+If you change the `Dockerfile`, rebuild the image with `docker compose build`.
+
+#### gcc 16 and CppUTest v4.0
+
+The Docker image uses gcc 16 (Debian trixie) and CppUTest v4.0, and includes `gdb`.
+The book was written for older compilers, which no longer get maintained images, so
+these changes keep the code building with no warnings while `-Werror` stays on:
+
+* **Pinned language standards.** gcc 16 compiles C as C23 and C++ as C++17 by default.
+  In C23, `void f();` means `void f(void);`, which breaks some of the code.
+  `CppUTestCompileFlags.mk` adds `-std=gnu99` (C) and `-std=gnu++11` (C++), and
+  `code/MakefileUnity.mk` and `SandBox/MakefileUnity.mk` add `-std=gnu99`
+  to the Unity builds.
+* **One new warning off.** `-Wno-enum-int-mismatch` (added in gcc 13) is turned off.
+  The `LightScheduler` headers declare `int day` while the source uses `Day day`. Every
+  other warning flag is unchanged.
+* **Semicolons after CppUTest assertions.** CppUTest v4.0 assertion macros are wrapped in
+  `do { ... } while (0)`, so they need a trailing `;`. The `checkLightState()` helpers in
+  `code-t1`, `code-t2` and `code-t3` (`tests/HomeAutomation/LightScheduler*Test.cpp`)
+  now use braces and semicolons.
+* **No CppUTest submodule.** The repo no longer includes CppUTest as a git submodule.
+  The top-level `Makefile` uses whatever `CPPUTEST_HOME` points at, and stops with an
+  error if it isn't set. `make clean` only cleans the book code.
+
+Known issue: one of CppUTest v4.0's own tests,
+`MemoryLeakWarningThreadSafe.turnOnThreadSafeNewDeleteOverloads`, fails while the image
+builds. It doesn't stop the build and doesn't affect the book code.
 
 ---
 ---
@@ -145,7 +123,8 @@ moving targets for CppUTest, gcc and clang.
 The CppUTest install has changed a lot since my book was written.  So you'll have 
 to install CppUTest locally for use with the book code.
 
-1) Download CppUTest from cpputest.org. Put CppUTest somewhere like
+1) Download CppUTest v4.0 from cpputest.org (older versions don't compile with
+recent gcc). Put CppUTest somewhere like
     `~/tools/cpputest`
 
 2) Build CppUTest locally using these instructions not the instructions 

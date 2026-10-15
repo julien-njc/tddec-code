@@ -1,0 +1,8 @@
+services:
+  tddec:
+    build: .
+    image: tddec/cpputest
+    volumes:
+      - .:/usr/src/tddec-code
+    stdin_open: true
+    tty: true
