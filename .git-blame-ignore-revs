@@ -1,0 +1,5 @@
+# Whitespace-only commits for git blame to skip:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Normalize line endings to LF
+18ead48b7bf4179b6e81a59aa633006daf6bbd89
