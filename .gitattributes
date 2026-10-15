@@ -1,0 +1,9 @@
+# Store text with LF in the repo and check it out with LF everywhere
+* text=auto eol=lf
+
+# Visual Studio 6 project files need CRLF
+*.dsp text eol=crlf
+*.dsw text eol=crlf
+
+*.pdf binary
+*.odt binary
