@@ -10,6 +10,7 @@ UNITY_HOME = ../code/unity.framework
 CPP_PLATFORM = Gcc
 UNITY_BUILD_HOME = ../code/unity.framework/extras/fixture/build
 
+UNITY_CFLAGS += -std=gnu99
 UNITY_CFLAGS += -DUNITY_OUTPUT_CHAR=UnityOutputCharSpy_OutputChar
 
 SRC_DIRS = \
